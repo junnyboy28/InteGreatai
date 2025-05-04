@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart API DevTool</title>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --secondary: #4285f4;
+            --dark: #202124;
+            --light: #ffffff;
+            --gray: #f5f5f5;
+            --border: #ddd;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark);
+            color: var(--light);
+        }
+        
+        .header {
+            background-color: var(--primary);
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: var(--light);
+            margin: 0;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .card {
+            background: var(--light);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            color: var(--dark);
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 16px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-color: var(--light);
+            color: var(--dark);
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: var(--secondary);
+        }
+        
+        pre {
+            background-color: var(--dark);
+            color: var(--light);
+            padding: 15px;
+            border-radius: 4px;
+            overflow: auto;
+            border: 1px solid #444;
+            white-space: pre-wrap;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        #loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .endpoint-card {
+            background: #f9f9f9;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .endpoint-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .endpoint-method {
+            background: var(--primary);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .parameter-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        
+        .parameter-name {
+            width: 150px;
+            font-weight: bold;
+        }
+        
+        .copy-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--dark);
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .response-area {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .export-btn {
+            background-color: #FF6C37;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: inline-flex;
+            align-items: center;
+            font-weight: 500;
+        }
+        
+        .export-btn:hover {
+            background-color: #E05320;
+        }
+        
+        .export-btn::before {
+            content: "";
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 2L6 7h4v8h4V7h4L12 2zM4 16v4h16v-4h-2v2H6v-2H4z"/></svg>');
+            background-size: contain;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Smart API DevTool</h1>
+    </div>
+    
+    <div class="container">
+        <div>
+            <div class="card">
+                <h2>API Analysis Form</h2>
+                <form id="apiForm">
+                    <div class="form-group">
+                        <label for="documentation_url">API Documentation URL:</label>
+                        <input type="url" id="documentation_url" name="documentation_url" required 
+                               placeholder="https://api.example.com/docs">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="use_case">Use Case Description:</label>
+                        <textarea id="use_case" name="use_case" rows="4" required 
+                                  placeholder="Describe what you want to do with this API..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="preferred_language">Preferred Programming Language:</label>
+                        <select id="preferred_language" name="preferred_language" required>
+                            <option value="Python">Python</option>
+                            <option value="JavaScript">JavaScript</option>
+                            <option value="Java">Java</option>
+                            <option value="C#">C#</option>
+                            <option value="Go">Go</option>
+                            <option value="PHP">PHP</option>
+                            <option value="Ruby">Ruby</option>
+                            <option value="TypeScript">TypeScript</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit">Analyze API</button>
+                </form>
+                
+                <div id="loading">Analyzing API documentation... This may take a minute.</div>
+                
+                <div class="suggestions">
+                    <h3>API Suggestions to Try:</h3>
+                    <ul>
+                        <li><a href="#" class="api-suggestion" data-url="https://developer.github.com/v3/">GitHub API</a></li>
+                        <li><a href="#" class="api-suggestion" data-url="https://openweathermap.org/api">OpenWeatherMap API</a></li>
+                        <li><a href="#" class="api-suggestion" data-url="https://stripe.com/docs/api">Stripe API</a></li>
+                        <li><a href="#" class="api-suggestion" data-url="https://developer.twitter.com/en/docs/twitter-api">Twitter API</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div>
+            <div class="card">
+                <h2>Analysis Results</h2>
+                <div id="results" style="display: none;">
+                    <div class="tabs">
+                        <div class="tab active" data-tab="overview">Overview</div>
+                        <div class="tab" data-tab="wrapper">Wrapper Code</div>
+                        <div class="tab" data-tab="env">Environment Setup</div>
+                        <div class="tab" data-tab="playground">Test Playground</div>
+                    </div>
+                    
+                    <div class="tab-content active" id="overview-tab">
+                        <div class="result-section">
+                            <h3>Endpoints</h3>
+                            <ul id="endpoints" class="endpoints-list"></ul>
+                        </div>
+                        
+                        <div class="result-section">
+                            <h3>Authentication Methods</h3>
+                            <div id="auth_methods" class="auth-methods"></div>
+                        </div>
+                        
+                        <div class="result-section">
+                            <h3>Integration Suggestion</h3>
+                            <div id="suggested_integration"></div>
+                        </div>
+                        
+                        <div class="result-section">
+                            <h3>Export Options</h3>
+                            <button id="export-postman" class="export-btn">Export to Postman Collection</button>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="wrapper-tab">
+                        <div class="result-section">
+                            <h3>Generated Wrapper Code</h3>
+                            <button class="copy-btn" onclick="copyToClipboard('wrapper_code')">Copy Code</button>
+                            <pre id="wrapper_code"></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="env-tab">
+                        <div class="result-section">
+                            <h3>.env Template</h3>
+                            <button class="copy-btn" onclick="copyToClipboard('env_template')">Copy Template</button>
+                            <pre id="env_template"></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="playground-tab">
+                        <h3>API Test Playground</h3>
+                        <div id="endpoint-playground">
+                            <p>Select an endpoint to test:</p>
+                            <select id="endpoint-selector"></select>
+                            
+                            <div id="endpoint-details" class="endpoint-card" style="display: none;">
+                                <div class="endpoint-header">
+                                    <span id="endpoint-path"></span>
+                                    <span id="endpoint-method" class="endpoint-method"></span>
+                                </div>
+                                <p id="endpoint-description"></p>
+                                
+                                <h4>Parameters</h4>
+                                <div id="endpoint-parameters"></div>
+                                
+                                <h4>Headers</h4>
+                                <div id="endpoint-headers">
+                                    <div class="parameter-row">
+                                        <input type="text" placeholder="Name" class="header-name">
+                                        <input type="text" placeholder="Value" class="header-value">
+                                    </div>
+                                    <button id="add-header" type="button">Add Header</button>
+                                </div>
+                                
+                                <div id="body-section" style="display: none;">
+                                    <h4>Request Body (JSON)</h4>
+                                    <textarea id="request-body" rows="5"></textarea>
+                                </div>
+                                
+                                <button id="send-request" type="button">Send Request</button>
+                                
+                                <div id="response-area" class="response-area">
+                                    <h4>Response</h4>
+                                    <div>Status: <span id="response-status"></span></div>
+                                    <div>Time: <span id="response-time"></span>ms</div>
+                                    <h5>Response Headers</h5>
+                                    <pre id="response-headers"></pre>
+                                    <h5>Response Body</h5>
+                                    <pre id="response-body"></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="error" style="display: none; color: red;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab functionality
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+            });
+        });
+        
+        // Copy to clipboard functionality
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const textArea = document.createElement('textarea');
+            textArea.value = element.textContent;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            alert('Copied to clipboard!');
+        }
+        
+        document.getElementById('apiForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const documentation_url = document.getElementById('documentation_url').value;
+            const use_case = document.getElementById('use_case').value;
+            const preferred_language = document.getElementById('preferred_language').value;
+            
+            // Show loading indicator
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        documentation_url,
+                        use_case,
+                        preferred_language
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}: ${await response.text()}`);
+                }
+                
+                const data = await response.json();
+                
+                // Display results
+                document.getElementById('endpoints').innerHTML = data.endpoints.map(endpoint => 
+                    `<li><strong>${endpoint.method} ${endpoint.path}</strong><p>${endpoint.description}</p></li>`
+                ).join('');
+                
+                document.getElementById('auth_methods').innerHTML = data.auth_methods.map(auth => 
+                    `<p><strong>${auth.type}:</strong> ${auth.description}</p>`
+                ).join('');
+                
+                document.getElementById('suggested_integration').innerHTML = `<p>${data.suggested_integration}</p>`;
+                document.getElementById('wrapper_code').textContent = data.wrapper_code;
+                document.getElementById('env_template').textContent = data.env_template || '# No environment variables needed';
+                
+                // Populate the endpoint selector for the test playground
+                const endpointSelector = document.getElementById('endpoint-selector');
+                endpointSelector.innerHTML = '<option value="">Select an endpoint to test</option>';
+                data.endpoints.forEach((endpoint, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = `${endpoint.method} ${endpoint.path}`;
+                    endpointSelector.appendChild(option);
+                });
+                
+                // Store the endpoints data for later use
+                window.apiEndpoints = data.endpoints;
+                
+                document.getElementById('results').style.display = 'block';
+            } catch (error) {
+                document.getElementById('error').textContent = `Error: ${error.message}`;
+                document.getElementById('error').style.display = 'block';
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+        
+        // Make API suggestion links clickable
+        document.querySelectorAll('.api-suggestion').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('documentation_url').value = this.getAttribute('data-url');
+            });
+        });
+        
+        // Test playground functionality
+        document.getElementById('endpoint-selector').addEventListener('change', function() {
+            const endpointIndex = this.value;
+            if (!endpointIndex) {
+                document.getElementById('endpoint-details').style.display = 'none';
+                return;
+            }
+            
+            const endpoint = window.apiEndpoints[endpointIndex];
+            document.getElementById('endpoint-path').textContent = endpoint.path;
+            document.getElementById('endpoint-method').textContent = endpoint.method;
+            document.getElementById('endpoint-description').textContent = endpoint.description;
+            
+            // Show/hide body input based on method
+            const bodyMethods = ['POST', 'PUT', 'PATCH'];
+            document.getElementById('body-section').style.display = 
+                bodyMethods.includes(endpoint.method) ? 'block' : 'none';
+            
+            // Populate parameters
+            const parametersDiv = document.getElementById('endpoint-parameters');
+            parametersDiv.innerHTML = '';
+            
+            if (endpoint.parameters && Object.keys(endpoint.parameters).length > 0) {
+                Object.entries(endpoint.parameters).forEach(([name, info]) => {
+                    const row = document.createElement('div');
+                    row.className = 'parameter-row';
+                    
+                    const nameSpan = document.createElement('div');
+                    nameSpan.className = 'parameter-name';
+                    nameSpan.textContent = `${name} (${info.type}):`;
+                    
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'parameter-value';
+                    input.dataset.param = name;
+                    input.placeholder = info.description;
+                    
+                    row.appendChild(nameSpan);
+                    row.appendChild(input);
+                    parametersDiv.appendChild(row);
+                });
+            } else {
+                parametersDiv.innerHTML = '<p>No parameters required</p>';
+            }
+            
+            document.getElementById('endpoint-details').style.display = 'block';
+            document.getElementById('response-area').style.display = 'none';
+        });
+        
+        // Add header button
+        document.getElementById('add-header').addEventListener('click', function() {
+            const headerDiv = document.getElementById('endpoint-headers');
+            const headerRow = document.createElement('div');
+            headerRow.className = 'parameter-row';
+            
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.className = 'header-name';
+            nameInput.placeholder = 'Name';
+            
+            const valueInput = document.createElement('input');
+            valueInput.type = 'text';
+            valueInput.className = 'header-value';
+            valueInput.placeholder = 'Value';
+            
+            headerRow.appendChild(nameInput);
+            headerRow.appendChild(valueInput);
+            
+            headerDiv.insertBefore(headerRow, this);
+        });
+        
+        // Send request button
+        document.getElementById('send-request').addEventListener('click', async function() {
+            // Get selected endpoint
+            const endpointIndex = document.getElementById('endpoint-selector').value;
+            const endpoint = window.apiEndpoints[endpointIndex];
+            
+            // Get base URL from env_template or ask user
+            let baseUrl = prompt('Enter the base URL for the API:', 'https://api.example.com');
+            if (!baseUrl) return;
+            
+            // Ensure trailing slash is consistent
+            if (baseUrl.endsWith('/') && endpoint.path.startsWith('/')) {
+                baseUrl = baseUrl.slice(0, -1);
+            }
+            
+            // Construct full URL
+            const url = baseUrl + endpoint.path;
+            
+            // Collect parameters
+            const params = {};
+            document.querySelectorAll('.parameter-value').forEach(input => {
+                if (input.value) {
+                    params[input.dataset.param] = input.value;
+                }
+            });
+            
+            // Collect headers
+            const headers = {};
+            document.querySelectorAll('.header-name').forEach((nameInput, index) => {
+                const name = nameInput.value.trim();
+                if (name) {
+                    const valueInput = document.querySelectorAll('.header-value')[index];
+                    headers[name] = valueInput.value;
+                }
+            });
+            
+            // Get body if applicable
+            const body = document.getElementById('request-body').value || {};
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/test-endpoint', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        url,
+                        method: endpoint.method,
+                        headers,
+                        params,
+                        body: body.length > 0 ? JSON.parse(body) : {}
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Display response
+                document.getElementById('response-status').textContent = data.status_code;
+                document.getElementById('response-time').textContent = data.time_ms.toFixed(2);
+                document.getElementById('response-headers').textContent = JSON.stringify(data.headers, null, 2);
+                
+                // Try to prettify JSON if possible
+                try {
+                    const jsonResponse = JSON.parse(data.response);
+                    document.getElementById('response-body').textContent = JSON.stringify(jsonResponse, null, 2);
+                } catch {
+                    document.getElementById('response-body').textContent = data.response;
+                }
+                
+                document.getElementById('response-area').style.display = 'block';
+                
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        });
+        
+        // Export to Postman functionality
+        document.getElementById('export-postman').addEventListener('click', function() {
+            if (!window.apiEndpoints || window.apiEndpoints.length === 0) {
+                alert('No API endpoints to export');
+                return;
+            }
+            
+            // Prompt for collection name and base URL
+            const collectionName = prompt('Enter a name for your Postman collection:', 'API Collection');
+            if (!collectionName) return;
+            
+            const baseUrl = prompt('Enter the base URL for the API:', 'https://api.example.com');
+            if (!baseUrl) return;
+            
+            // Generate Postman collection
+            const postmanCollection = generatePostmanCollection(collectionName, baseUrl, window.apiEndpoints);
+            
+            // Download as JSON file
+            downloadJson(postmanCollection, `${collectionName.replace(/\s+/g, '_')}.postman_collection.json`);
+        });
+        
+        function generatePostmanCollection(name, baseUrl, endpoints) {
+            // Create collection skeleton
+            const collection = {
+                info: {
+                    _postman_id: generateUuid(),
+                    name: name,
+                    description: "Generated from Smart API DevTool",
+                    schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+                },
+                item: []
+            };
+            
+            // Process each endpoint
+            endpoints.forEach(endpoint => {
+                // Make sure baseUrl and path are properly joined
+                let fullUrl = baseUrl;
+                if (baseUrl.endsWith('/') && endpoint.path.startsWith('/')) {
+                    fullUrl = baseUrl + endpoint.path.substring(1);
+                } else if (!baseUrl.endsWith('/') && !endpoint.path.startsWith('/')) {
+                    fullUrl = baseUrl + '/' + endpoint.path;
+                } else {
+                    fullUrl = baseUrl + endpoint.path;
+                }
+                
+                // Create request item
+                const item = {
+                    name: `${endpoint.method} ${endpoint.path}`,
+                    request: {
+                        method: endpoint.method,
+                        header: [],
+                        url: {
+                            raw: fullUrl,
+                            protocol: fullUrl.startsWith('https') ? 'https' : 'http',
+                            host: fullUrl.replace(/^https?:\/\//, '').split('/')[0].split('.'),
+                            path: fullUrl.replace(/^https?:\/\/[^\/]+/, '').split('/').filter(p => p)
+                        },
+                        description: endpoint.description
+                    },
+                    response: []
+                };
+                
+                // Add parameters if any
+                if (endpoint.parameters && Object.keys(endpoint.parameters).length > 0) {
+                    item.request.url.query = [];
+                    Object.entries(endpoint.parameters).forEach(([name, info]) => {
+                        item.request.url.query.push({
+                            key: name,
+                            value: "",
+                            description: info.description,
+                            disabled: false
+                        });
+                    });
+                }
+                
+                // Add body for POST/PUT/PATCH
+                if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
+                    item.request.body = {
+                        mode: 'raw',
+                        raw: '{\n    "key": "value"\n}',
+                        options: {
+                            raw: {
+                                language: 'json'
+                            }
+                        }
+                    };
+                }
+                
+                collection.item.push(item);
+            });
+            
+            return collection;
+        }
+        
+        function downloadJson(data, filename) {
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        }
+        
+        function generateUuid() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+    </script>
+</body>
+</html>
