@@ -6,24 +6,35 @@
 
 **InteGreat.ai** is a comprehensive tool for analyzing API documentation, generating wrapper code, and testing API endpoints. It helps developers integrate with third-party APIs more efficiently by automating documentation analysis and generating ready-to-use code.
 
+![InteGreat.ai Dashboard](image-1.png)
+
 ---
 
 ## ✨ Features
 
 - 📚 **API Documentation Analysis**  
   Upload or link to API documentation and get it automatically parsed.
+  ![Entering the input and choosing the language](image-2.png)
+  ![Analysis](image-3.png)
+  ![authentication and suggested integration based on your use case](image-4.png)
 
 - 💻 **Wrapper Code Generation**  
   Generate ready-to-use code in your preferred programming language.
+  ![wrapper code generation](image-5.png)
 
 - 🔑 **Environment Setup Templates**  
   Automatically generate `.env` templates based on the API's authentication.
+  ![.env setup](image-6.png)
 
 - 🧪 **API Testing Playground**  
   Test API endpoints directly within the application.
+  ![testing playground](image-7.png)
 
 - 📤 **Postman Collection Export**  
   Export the analyzed API as a Postman collection.
+  ![Postman export](image-8.png)
+  ![Json file downloaded](image-9.png)
+  ![In POSTMAN](image-10.png)
 
 ---
 
